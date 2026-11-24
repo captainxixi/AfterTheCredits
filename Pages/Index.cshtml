@@ -113,6 +113,11 @@
                                 </form>
                             }
                         }
+                        else if (Model.WatchedMovieIds.Contains(movie.Id))
+                        {
+                            <p>⭐ @movie.Rating.ToString("F1")</p>
+                            <span class="badge text-bg-success">✓ Watched</span>
+                        }
                         else if (Model.WatchlistMovieIds.Contains(movie.Id))
                         {
                             <p>⭐ @movie.Rating.ToString("F1")</p>

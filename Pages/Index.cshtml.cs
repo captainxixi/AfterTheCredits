@@ -50,6 +50,7 @@ public class IndexModel(
     public HashSet<int> FavoriteMovieIds { get; private set; } = [];
     public int FavoriteTarget => RecommendationService.FavoriteTarget;
     public HashSet<int> WatchlistMovieIds { get; private set; } = [];
+    public HashSet<int> WatchedMovieIds { get; private set; } = [];
     public bool ShowOnboarding { get; private set; }
     public bool CanChangeStarterBatch { get; private set; }
     public int StarterBatchDepth { get; private set; }
@@ -62,7 +63,10 @@ public class IndexModel(
     {
         var visitor = await CurrentVisitor.AsNoTracking().SingleAsync(cancellationToken);
         var entries = await db.WatchlistEntries.AsNoTracking().ToListAsync(cancellationToken);
-        WatchlistMovieIds = entries.Select(entry => entry.MovieId).ToHashSet();
+        WatchlistMovieIds = entries.Where(entry => !entry.IsWatched)
+            .Select(entry => entry.MovieId).ToHashSet();
+        WatchedMovieIds = entries.Where(entry => entry.IsWatched)
+            .Select(entry => entry.MovieId).ToHashSet();
         FavoriteMovieIds = entries
             .Where(entry => entry.IsWatched && entry.MyRating >= RecommendationService.FavoriteRating)
             .Select(entry => entry.MovieId)
@@ -115,7 +119,8 @@ public class IndexModel(
             var previewIds = WatchlistPreview.Select(movie => movie.Id).ToHashSet();
             Movies = document.RootElement.GetProperty("results").EnumerateArray()
                 .Select(ReadMovie)
-                .Where(movie => !previewIds.Contains(movie.Id))
+                .Where(movie => !previewIds.Contains(movie.Id) &&
+                    (!string.IsNullOrWhiteSpace(SearchQuery) || !WatchedMovieIds.Contains(movie.Id)))
                 .ToArray();
         }
         catch (Exception exception) when (IsTmdbFailure(exception, cancellationToken))
