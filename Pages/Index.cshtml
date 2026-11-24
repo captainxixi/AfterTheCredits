@@ -1,0 +1,124 @@
+﻿@page
+@using AfterTheCredits.Models
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+    var isStarterList = Model.ShowOnboarding && string.IsNullOrWhiteSpace(Model.SearchQuery);
+}
+
+<div class="text-center">
+    <section class="home-hero">
+        <h1>What should we watch tonight?</h1>
+        <p>Find a movie for tonight, with picks shaped by the films you love.</p>
+    </section>
+
+    <form method="get" class="home-search d-flex justify-content-center gap-2">
+        <input class="form-control" type="search" asp-for="SearchQuery"
+               aria-label="Search for a movie" placeholder="Search for a movie…" />
+
+        <button class="btn btn-outline-primary" type="submit">Search</button>
+    </form>
+
+    @if (Model.ShowOnboarding)
+    {
+        <section class="onboarding-panel" aria-labelledby="starter-heading">
+            <h2 class="h3" id="starter-heading">Pick movies you’ve seen and liked</h2>
+            <p>Aim for @Model.FavoriteTarget favorites. You can start with whatever you’ve selected.</p>
+            <p><strong>@Math.Min(Model.FavoriteMovieIds.Count, Model.FavoriteTarget) / @Model.FavoriteTarget selected</strong></p>
+            <form method="post" asp-page-handler="FinishOnboarding">
+                <button class="btn btn-primary" type="submit">
+                    @(Model.FavoriteMovieIds.Count == 0 ? "Browse tonight’s picks" : "Get recommendations")
+                </button>
+            </form>
+        </section>
+    }
+
+    @if (Model.MovieMessage is not null)
+    {
+        <p role="status">@Model.MovieMessage</p>
+    }
+    else if (Model.Movies.Count == 0)
+    {
+        <p>@(Model.ShowOnboarding && string.IsNullOrWhiteSpace(Model.SearchQuery)
+            ? "Search for a movie you’ve seen and liked to keep going."
+            : "No movies found.")</p>
+    }
+    else
+    {
+        <h2 class="h4 movie-grid-heading">@(isStarterList ? "Starter movies" :
+            string.IsNullOrWhiteSpace(Model.SearchQuery) ? "Popular movies" : "Search results")</h2>
+
+        <ul class="movie-grid @(isStarterList ? "movie-grid--starters" : "")">
+            @foreach (Movie movie in Model.Movies)
+            {
+                <li class="movie-card">
+                    @if (!string.IsNullOrEmpty(movie.PosterPath))
+                    {
+                        <a asp-page="/MovieDetails" asp-route-id="@movie.Id">
+                            <img src="https://image.tmdb.org/t/p/w200@(movie.PosterPath)" alt="@movie.Title poster" />
+                        </a>
+                    }
+
+                    <h3><a asp-page="/MovieDetails" asp-route-id="@movie.Id">@movie.Title</a></h3>
+
+                    <div class="movie-card-footer">
+                        @if (Model.ShowOnboarding)
+                        {
+                            @if (Model.FavoriteMovieIds.Contains(movie.Id))
+                            {
+                                <span>✓ Selected</span>
+                            }
+                            else
+                            {
+                                <form method="post" asp-page-handler="LikeStarter" class="mb-2">
+                                    <input type="hidden" name="movieId" value="@movie.Id" />
+                                    <input type="hidden" name="SearchQuery" value="@Model.SearchQuery" />
+                                    <button class="btn btn-outline-primary" type="submit">I like this</button>
+                                </form>
+                            }
+                        }
+                        else if (Model.WatchlistMovieIds.Contains(movie.Id))
+                        {
+                            <p>⭐ @movie.Rating.ToString("F1")</p>
+                            <span>✓ Added</span>
+                        }
+                        else
+                        {
+                            <p>⭐ @movie.Rating.ToString("F1")</p>
+                            <form method="post">
+                                <input type="hidden" name="movieId" value="@movie.Id" />
+                                <input type="hidden" name="SearchQuery" value="@Model.SearchQuery" />
+                                <button class="btn btn-outline-primary" type="submit">Add to Watchlist</button>
+                            </form>
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+
+    }
+
+    @if (isStarterList && (Model.StarterBatchDepth > 0 || Model.CanChangeStarterBatch))
+    {
+        <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
+            @if (Model.StarterBatchDepth > 0)
+            {
+                <form method="post" asp-page-handler="PreviousStarterBatch">
+                    <input type="hidden" name="batchDepth" value="@Model.StarterBatchDepth" />
+                    <button class="btn btn-outline-primary" type="submit">Previous batch</button>
+                </form>
+            }
+
+            @if (Model.CanChangeStarterBatch)
+            {
+                <form method="post" asp-page-handler="ChangeStarterBatch">
+                    @foreach (var movie in Model.Movies)
+                    {
+                        <input type="hidden" name="movieIds" value="@movie.Id" />
+                    }
+                    <button class="btn btn-outline-primary" type="submit">Show another batch</button>
+                </form>
+            }
+        </div>
+    }
+</div>

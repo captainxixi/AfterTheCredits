@@ -1,0 +1,100 @@
+@page "{id:int}"
+@using System.Globalization
+@model AfterTheCredits.Pages.MovieDetailsModel
+
+<div class="movie-details">
+    <div class="movie-poster">
+        @if (!string.IsNullOrEmpty(Model.PosterPath))
+        {
+            <img src="https://image.tmdb.org/t/p/w500@(Model.PosterPath)" alt="@Model.Title poster" width="250" />
+        }
+    </div>
+    <div class="movie-info">
+        <h1>@Model.Title</h1>
+        <p>⭐ TMDB Rating: @Model.Rating.ToString("F1") / 10</p>
+
+        <p>📅 Release Date: @Model.ReleaseDate</p>
+        <p>🎬 Genres: @string.Join(", ", Model.Genres.Select(g => g.Name))</p>
+
+        <p>⏱ Runtime: @Model.Runtime minutes</p>
+        @if (Model.IsInWatchlist)
+        {
+            <p>✓ Added to Watchlist</p>
+        }
+        else
+        {
+            <form method="post" asp-route-id="@Model.Id">
+                <button class="btn btn-outline-primary" type="submit">Add to Watchlist</button>
+            </form>
+        }
+
+        <p>Watch status: @(Model.IsWatched ? "Watched" : "Not watched")</p>
+        <form method="post" asp-page-handler="SetWatched" asp-route-id="@Model.Id">
+            <input type="hidden" name="isWatched" value="@(!Model.IsWatched ? "true" : "false")" />
+            <button class="btn btn-outline-primary" type="submit">
+                @(Model.IsWatched ? "Mark as Not Watched" : "Mark as Watched")
+            </button>
+        </form>
+        <form method="post" asp-page-handler="SaveRating" asp-route-id="@Model.Id">
+            <label for="my-rating">My Rating (0–10)</label>
+            <input id="my-rating" type="number" name="myRating" min="0" max="10" step="0.5"
+                   value="@(Model.MyRating?.ToString(CultureInfo.InvariantCulture))" required />
+            <button class="btn btn-outline-primary" type="submit">Save Rating</button>
+        </form>
+        @if (!Model.IsInWatchlist)
+        {
+            <p>Marking this movie as watched or saving a rating also adds it to your watchlist.</p>
+        }
+
+        <h2>Overview</h2>
+        <p>@Model.Overview</p>
+
+        <h2>Where to Watch in Ireland 🇮🇪</h2>
+
+        <h3>Subscription</h3>
+        @if (Model.StreamingProviders.Count > 0)
+        {
+            <ul>
+                @foreach (var provider in Model.StreamingProviders)
+                {
+                    <li>@provider</li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>Not available.</p>
+        }
+
+        <h3>Rent</h3>
+        @if (Model.RentalProviders.Count > 0)
+        {
+            <ul>
+                @foreach (var provider in Model.RentalProviders)
+                {
+                    <li>@provider</li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>Not available.</p>
+        }
+
+        <h3>Buy</h3>
+        @if (Model.PurchaseProviders.Count > 0)
+        {
+            <ul>
+                @foreach (var provider in Model.PurchaseProviders)
+                {
+                    <li>@provider</li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p>Not available.</p>
+        }
+        
+    </div>
+</div>

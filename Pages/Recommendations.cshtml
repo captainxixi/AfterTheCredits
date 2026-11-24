@@ -1,0 +1,107 @@
+@page
+@model RecommendationsModel
+@{
+    ViewData["Title"] = "Recommendations";
+    var wildCard = Model.Candidates.FirstOrDefault(candidate => candidate.Movie.Id == Model.WildCardMovieId);
+    var isRanked = Model.RecommendationReasons.Count > 0;
+}
+
+<link rel="stylesheet" href="~/css/recommendations.css" asp-append-version="true" />
+
+<header class="recommendations-header"><h1>Tonight’s picks</h1></header>
+
+@if (Model.RankingMessage is not null)
+{
+    <p class="recommendations-feedback" role="status">@Model.RankingMessage</p>
+}
+
+@if (Model.ErrorMessage is not null)
+{
+    <p role="alert">@Model.ErrorMessage</p>
+}
+else if (Model.Candidates.Count == 0)
+{
+    <p>No movie candidates are available.</p>
+}
+else
+{
+    <div class="recommendations-layout @(wildCard is null ? "" : "recommendations-layout--with-wild-card")">
+        <section aria-labelledby="recommendation-picks">
+            <header class="recommendations-group-heading">
+                <h2 id="recommendation-picks">@(isRanked ? "Personalized picks" : "Popular picks")</h2>
+                @if (isRanked)
+                {
+                    <p class="recommendations-note">Ranked from most to least similar to your favorites so far.</p>
+                }
+            </header>
+
+            <ol class="recommendations-picks">
+                @foreach (var candidate in Model.Candidates.Where(candidate => candidate.Movie.Id != Model.WildCardMovieId))
+                {
+                    var movie = candidate.Movie;
+                    <li class="recommendation-card">
+                        <a asp-page="/MovieDetails" asp-route-id="@movie.Id">
+                            @if (!string.IsNullOrEmpty(movie.PosterPath))
+                            {
+                                <img class="recommendation-poster" src="https://image.tmdb.org/t/p/w200@(movie.PosterPath)"
+                                     alt="" width="120" height="180" />
+                            }
+                            <span class="recommendation-title">@movie.Title</span>
+                        </a>
+                        <p class="recommendation-meta">TMDB @movie.Rating.ToString("F1")</p>
+                        @if (Model.RecommendationReasons.TryGetValue(movie.Id, out var reason) && reason is not null)
+                        {
+                            <p class="recommendation-meta">@reason</p>
+                        }
+                        @if (Model.ViewingSummaries.TryGetValue(movie.Id, out var viewingSummary))
+                        {
+                            <p class="recommendation-meta"><strong>@viewingSummary</strong></p>
+                        }
+                        @if (candidate.IsFromWatchlist)
+                        {
+                            <p class="recommendation-meta">On your watchlist</p>
+                        }
+                    </li>
+                }
+            </ol>
+        </section>
+
+        @if (wildCard is not null)
+        {
+            var movie = wildCard.Movie;
+            <section class="recommendations-wild-card" aria-labelledby="recommendation-wild-card">
+                <header class="recommendations-group-heading">
+                    <h2 id="recommendation-wild-card">Wild Card</h2>
+                    <p class="recommendations-note">Outside your usual taste · @Model.WildCardGenre</p>
+                </header>
+                <div class="recommendation-card recommendation-card--wild">
+                    <a asp-page="/MovieDetails" asp-route-id="@movie.Id">
+                        @if (!string.IsNullOrEmpty(movie.PosterPath))
+                        {
+                            <img class="recommendation-poster" src="https://image.tmdb.org/t/p/w200@(movie.PosterPath)"
+                                 alt="" width="120" height="180" />
+                        }
+                        <span class="recommendation-title">@movie.Title</span>
+                    </a>
+                    <p class="recommendation-meta">TMDB @movie.Rating.ToString("F1")</p>
+                    @if (Model.ViewingSummaries.TryGetValue(movie.Id, out var viewingSummary))
+                    {
+                        <p class="recommendation-meta"><strong>@viewingSummary</strong></p>
+                    }
+                    @if (wildCard.IsFromWatchlist)
+                    {
+                        <p class="recommendation-meta">On your watchlist</p>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+    @if (Model.ViewingSummaries.Count > 0)
+    {
+        <p class="recommendation-meta">Viewing options in Ireland by <a href="https://www.justwatch.com/ie">JustWatch</a>.</p>
+    }
+    @if (Model.WildCardMessage is not null)
+    {
+        <p role="status">@Model.WildCardMessage</p>
+    }
+}
