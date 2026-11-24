@@ -1,0 +1,24 @@
+@page
+@model AccessModel
+@{
+    ViewData["Title"] = "Private demo access";
+}
+
+<section class="demo-access">
+    <h1>Private portfolio demo</h1>
+    <p>This demonstration is intended for invited adult visitors (18+) only.
+        Enter the shared access password to explore After the Credits.</p>
+
+    <form method="post">
+        <input asp-for="ReturnUrl" type="hidden" />
+        <label for="access-password" class="form-label">Access password</label>
+        <input id="access-password" name="Password" type="password" class="form-control"
+               autocomplete="current-password" required />
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="ModelOnly" class="text-danger mt-2" role="alert"></div>
+        }
+        <button type="submit" class="btn btn-primary w-100 mt-3">Enter demo</button>
+    </form>
+    <a asp-page="/Privacy" class="demo-access-privacy">Privacy Policy</a>
+</section>

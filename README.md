@@ -2,7 +2,7 @@
 
 **Spend less time choosing a movie and more time watching one.**
 
-[Try the live demo](https://afterthecredits-production.up.railway.app/) · Hosted on Railway · No sign-up required
+[Private live demo](https://afterthecredits-production.up.railway.app/) · Hosted on Railway · Access password shared with invited adult reviewers
 
 After the Credits is a full-stack movie discovery web application. Instead of presenting an endless feed, it aims to offer four personalized movie picks and one Wild Card that explores a genre the viewer rarely watches. Each pick includes viewing availability in Ireland when that information is available.
 
@@ -53,23 +53,24 @@ Save films for later in Watchlist, and record watched films and personal ratings
 | Data | SQLite, Entity Framework Core |
 | Movie metadata | TMDB API |
 | Semantic recommendations | Gemini Embedding 2 |
-| Session isolation | ASP.NET Core Data Protection, HTTP-only cookies |
+| Access and session isolation | ASP.NET Core Cookie Authentication, Authorization, Data Protection |
 
-The cookie contains a protected visitor identifier. Watchlists, ratings and session expiry are stored in SQLite, while embeddings generated from public movie metadata are shared across sessions.
+The shared access password is configured on the server. A separate seven-day authentication cookie grants access to the demo, while a 24-hour visitor cookie links each browser to its own movie records. Watchlists, ratings and visitor session expiry are stored in SQLite, while embeddings generated from public movie metadata are shared across sessions.
 
 ## Run locally
 
-Prerequisites: .NET 10 SDK, a TMDB read access token, and a Gemini API key.
+Prerequisites: .NET 10 SDK, a trusted local HTTPS development certificate, a TMDB read access token, and a Gemini API key.
 
 ```bash
 git clone https://github.com/captainxixi/AfterTheCredits.git
 cd AfterTheCredits
 dotnet user-secrets set "TMDB:ReadAccessToken" "YOUR_TMDB_READ_ACCESS_TOKEN"
 dotnet user-secrets set "Gemini:ApiKey" "YOUR_GEMINI_API_KEY"
-dotnet run
+dotnet user-secrets set "DemoAccess" "YOUR_PRIVATE_DEMO_PASSWORD"
+dotnet run --launch-profile https
 ```
 
-Open [http://localhost:5118](http://localhost:5118). EF Core applies database migrations automatically at startup. API credentials and the local SQLite database are excluded from version control.
+Open [https://localhost:7103](https://localhost:7103). EF Core applies database migrations automatically at startup. API credentials, the access password and the local SQLite database are excluded from version control.
 
 ## Deployment
 
@@ -77,6 +78,7 @@ For a single-instance deployment, configure the following environment variables:
 
 | Variable | Purpose |
 | --- | --- |
+| `DemoAccess` | Shared private demo password. Access is denied if it is unset. |
 | `TMDB__ReadAccessToken` | TMDB API authentication |
 | `Gemini__ApiKey` | Gemini API authentication |
 | `ConnectionStrings__DefaultConnection` | SQLite connection string pointing to a persistent disk, with foreign keys enabled |

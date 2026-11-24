@@ -157,6 +157,27 @@ body {
     line-height: 1.7;
 }
 
+.demo-access {
+    max-width: 28rem;
+    margin: clamp(1.5rem, 8vh, 5rem) auto;
+    padding: clamp(1.25rem, 4vw, 2rem);
+    border: 1px solid var(--atc-line);
+    border-radius: var(--atc-radius);
+    background: var(--atc-surface);
+}
+
+.demo-access p {
+    color: var(--atc-muted);
+    margin: 1rem 0 1.5rem;
+}
+
+.demo-access-privacy {
+    display: block;
+    margin-top: 1.25rem;
+    text-align: center;
+    font-size: .875rem;
+}
+
 .privacy-policy h2 {
     margin-top: 1.5rem;
     font-size: 1.2rem;

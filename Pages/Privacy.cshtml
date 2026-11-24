@@ -10,10 +10,15 @@
     <h2>About this service</h2>
     <p>After the Credits is an independent movie discovery and recommendation demo.
         It helps you choose films based on your preferences and find viewing options in Ireland.
-        You can use the website without registering or providing your name or email address.</p>
+        This private portfolio demo is intended for invited adults and requires a shared access password.
+        You can use it without registering or providing your name or email address.</p>
 
     <h2>Visitor sessions and cookies</h2>
-    <p>When you first visit, the application creates a random visitor identifier and stores a protected version
+    <p>After the shared password is verified, the site sets a separate HTTP-only, Secure authentication cookie
+        for access to the demo. It expires after seven days and is not renewed by returning visits.
+        The submitted password is checked against the server configuration and is not stored as a movie record.
+        This cookie is independent of the visitor session described below.</p>
+    <p>After access is granted, the application creates a random visitor identifier and stores a protected version
         of it in an essential cookie.
         The cookie links your browser to your own movie records in the server database.
         It is HTTP-only and marked Secure in production. It expires 24 hours after the session is created.
@@ -39,7 +44,8 @@
         Consequently, removal from the active database may take place after the session expires.</p>
     <p>To remove your saved movie data sooner, use <strong>Reset Demo</strong> in the navigation while your session
         is active. This deletes the current visitor session and its associated movie records and removes its
-        visitor cookie. Returning to the homepage starts a new session.
+        visitor cookie. Returning to the homepage starts a new session. Reset Demo does not remove the
+        separate access authentication cookie.
         You can also remove individual films from My Movies.</p>
     <p>The database contains a shared cache of numerical embeddings generated from public movie information.
         The cache is not connected to a particular visitor identifier and is not deleted by Reset Demo.
