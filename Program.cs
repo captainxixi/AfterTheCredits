@@ -9,13 +9,29 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddMemoryCache();
-builder.Services.AddDataProtection().SetApplicationName("AfterTheCredits");
+//builder.Services.AddDataProtection().SetApplicationName("AfterTheCredits");
+var dataProtection = builder.Services.AddDataProtection()
+    .SetApplicationName("AfterTheCredits");
+
+var keysPath = builder.Configuration["DataProtection:KeysPath"];
+
+if (!string.IsNullOrWhiteSpace(keysPath))
+{
+    Directory.CreateDirectory(keysPath);
+    dataProtection.PersistKeysToFileSystem(
+        new DirectoryInfo(keysPath));
+}
 builder.Services.AddScoped<DemoVisitorSession>();
 builder.Services.AddHttpClient();
 builder.Services.AddHttpClient<GeminiEmbeddingService>();
 builder.Services.AddScoped<RecommendationService>();
+/*builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlite("Data Source=afterthecredits.db;Foreign Keys=True"));*/
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? "Data Source=afterthecredits.db;Foreign Keys=True";
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite("Data Source=afterthecredits.db;Foreign Keys=True"));
+    options.UseSqlite(connectionString));
 
 var app = builder.Build();
 
