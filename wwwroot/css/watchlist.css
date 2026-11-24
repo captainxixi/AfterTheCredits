@@ -1,3 +1,32 @@
+.watchlist-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin: 1rem 0;
+    padding-bottom: .65rem;
+    border-bottom: 1px solid var(--atc-line);
+}
+
+.watchlist-tab {
+    padding: .55rem .9rem;
+    border: 1px solid transparent;
+    border-radius: .5rem;
+    color: var(--atc-muted);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.watchlist-tab:hover,
+.watchlist-tab--active {
+    color: var(--atc-ink);
+    border-color: var(--atc-line);
+    background: var(--atc-surface);
+}
+
+.watchlist-tab--active {
+    border-bottom-color: #8ca8ff;
+}
+
 .watchlist-genres {
     display: flex;
     flex-wrap: wrap;

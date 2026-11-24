@@ -17,6 +17,11 @@ public class WatchlistModel : PageModel
     public List<Movie> Movies { get; set; } = new();
     public Dictionary<int, double> GenreScores { get; set; } = new();
     public List<string> TopGenres { get; set; } = new();
+    [BindProperty(SupportsGet = true)]
+    public bool Watched { get; set; }
+    public int WatchedCount => Entries.Count(entry => entry.IsWatched);
+    public int WatchlistCount => Entries.Count - WatchedCount;
+    public IEnumerable<Movie> VisibleMovies => Movies.Where(movie => movie.IsWatched == Watched);
 
     public WatchlistModel(AppDbContext dbContext,
     IHttpClientFactory httpClientFactory,
@@ -36,7 +41,7 @@ public class WatchlistModel : PageModel
             return NotFound();
         }
 
-        return RedirectToPage();
+        return RedirectToPage(new { watched = !Watched });
     }
     public async Task<IActionResult> OnPostSaveRatingAsync(
     int movieId, double? myRating)
@@ -48,14 +53,16 @@ public class WatchlistModel : PageModel
         }
 
         var updated = await _dbContext.WatchlistEntries.Where(entry => entry.MovieId == movieId)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(entry => entry.MyRating, myRating),
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(entry => entry.MyRating, myRating)
+                .SetProperty(entry => entry.IsWatched, true),
                 HttpContext.RequestAborted);
         if (updated == 0)
         {
             return NotFound();
         }
 
-        return RedirectToPage();
+        return RedirectToPage(new { watched = true });
     }
     public async Task<IActionResult> OnPostRemoveAsync(int movieId)
     {
@@ -66,11 +73,11 @@ public class WatchlistModel : PageModel
             return NotFound();
         }
 
-        return RedirectToPage();
+        return RedirectToPage(new { watched = Watched });
     }
     public async Task OnGetAsync()
     {
-        Entries = await _dbContext.WatchlistEntries.ToListAsync();
+        Entries = await _dbContext.WatchlistEntries.AsNoTracking().ToListAsync();
         var token = _configuration["TMDB:ReadAccessToken"];
 
         using var client = _httpClientFactory.CreateClient();

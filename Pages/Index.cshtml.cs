@@ -46,6 +46,7 @@ public class IndexModel(
     public string? SearchQuery { get; set; }
 
     public IReadOnlyList<Movie> Movies { get; private set; } = [];
+    public IReadOnlyList<Movie> WatchlistPreview { get; private set; } = [];
     public HashSet<int> FavoriteMovieIds { get; private set; } = [];
     public int FavoriteTarget => RecommendationService.FavoriteTarget;
     public HashSet<int> WatchlistMovieIds { get; private set; } = [];
@@ -78,7 +79,8 @@ public class IndexModel(
                 .Where(movie => !skipped.Contains(movie.Id) && !FavoriteMovieIds.Contains(movie.Id))
                 .ToArray();
             CanChangeStarterBatch = availableStarters.Length > StarterBatchSize;
-            Movies = await GetStartersAsync(availableStarters.Take(StarterBatchSize).ToArray(),
+            Movies = await GetMovieDetailsAsync(availableStarters.Take(StarterBatchSize)
+                    .Select(movie => (movie.Id, (string?)movie.Title)).ToArray(),
                 token, cancellationToken);
             return;
         }
@@ -87,6 +89,16 @@ public class IndexModel(
         {
             MovieMessage = "Movies are temporarily unavailable.";
             return;
+        }
+
+        if (!ShowOnboarding && string.IsNullOrWhiteSpace(SearchQuery))
+        {
+            var preview = entries.Where(entry => !entry.IsWatched)
+                .OrderByDescending(entry => entry.Id)
+                .Take(4)
+                .Select(entry => (entry.MovieId, (string?)null))
+                .ToArray();
+            WatchlistPreview = await GetMovieDetailsAsync(preview, token, cancellationToken);
         }
 
         using var client = CreateTmdbClient(token);
@@ -100,7 +112,11 @@ public class IndexModel(
             response.EnsureSuccessStatusCode();
             using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
             using var document = await JsonDocument.ParseAsync(stream, cancellationToken: cancellationToken);
-            Movies = document.RootElement.GetProperty("results").EnumerateArray().Select(ReadMovie).ToArray();
+            var previewIds = WatchlistPreview.Select(movie => movie.Id).ToHashSet();
+            Movies = document.RootElement.GetProperty("results").EnumerateArray()
+                .Select(ReadMovie)
+                .Where(movie => !previewIds.Contains(movie.Id))
+                .ToArray();
         }
         catch (Exception exception) when (IsTmdbFailure(exception, cancellationToken))
         {
@@ -116,7 +132,17 @@ public class IndexModel(
             return BadRequest();
         }
 
-        await db.SaveWatchlistMovieAsync(movieId, cancellationToken);
+        var saved = await db.SaveWatchlistMovieAsync(movieId, cancellationToken);
+        if (Request.Headers.Accept.ToString() == "application/json")
+        {
+            if (saved == 0)
+            {
+                return new ConflictObjectResult("Your demo session has expired.");
+            }
+
+            return new JsonResult(new { added = true });
+        }
+
         return RedirectToPage(new { SearchQuery });
     }
 
@@ -218,21 +244,22 @@ public class IndexModel(
         return RedirectToPage("/Recommendations");
     }
 
-    private async Task<Movie[]> GetStartersAsync(
-        (int Id, string Title)[] starters, string? token, CancellationToken cancellationToken)
+    private async Task<Movie[]> GetMovieDetailsAsync(
+        (int Id, string? Title)[] movies, string? token, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(token) || starters.Length == 0)
+        if (string.IsNullOrWhiteSpace(token) || movies.Length == 0)
         {
-            return starters.Select(starter => new Movie { Id = starter.Id, Title = starter.Title }).ToArray();
+            return movies.Where(movie => movie.Title is not null)
+                .Select(movie => new Movie { Id = movie.Id, Title = movie.Title! }).ToArray();
         }
 
         using var client = CreateTmdbClient(token);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(TimeSpan.FromSeconds(4));
 
-        return await Task.WhenAll(starters.Select(async starter =>
+        var results = await Task.WhenAll(movies.Select(async item =>
         {
-            var cacheKey = $"onboarding-tmdb:{starter.Id}";
+            var cacheKey = $"tmdb-movie-summary:{item.Id}";
             if (cache.TryGetValue<Movie>(cacheKey, out var cached) && cached is not null)
             {
                 return cached;
@@ -241,7 +268,7 @@ public class IndexModel(
             try
             {
                 using var response = await client.GetAsync(
-                    $"https://api.themoviedb.org/3/movie/{starter.Id}", timeout.Token);
+                    $"https://api.themoviedb.org/3/movie/{item.Id}", timeout.Token);
                 response.EnsureSuccessStatusCode();
                 using var stream = await response.Content.ReadAsStreamAsync(timeout.Token);
                 using var document = await JsonDocument.ParseAsync(stream, cancellationToken: timeout.Token);
@@ -251,10 +278,11 @@ public class IndexModel(
             }
             catch (Exception exception) when (IsTmdbFailure(exception, cancellationToken))
             {
-                logger.LogDebug(exception, "Could not load starter movie {MovieId}.", starter.Id);
-                return new Movie { Id = starter.Id, Title = starter.Title };
+                logger.LogDebug(exception, "Could not load movie {MovieId}.", item.Id);
+                return item.Title is null ? null : new Movie { Id = item.Id, Title = item.Title };
             }
         }));
+        return results.OfType<Movie>().ToArray();
     }
 
     private HttpClient CreateTmdbClient(string token)

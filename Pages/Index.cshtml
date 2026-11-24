@@ -10,6 +10,12 @@
     <section class="home-hero">
         <h1>What should we watch tonight?</h1>
         <p>Find a movie for tonight, with picks shaped by the films you love.</p>
+        @if (!Model.ShowOnboarding)
+        {
+            <a class="btn btn-lg home-recommendation-button" asp-page="/Recommendations">
+                Get recommendations <span aria-hidden="true">→</span>
+            </a>
+        }
     </section>
 
     <form method="get" class="home-search d-flex justify-content-center gap-2">
@@ -33,6 +39,33 @@
         </section>
     }
 
+    @if (Model.WatchlistPreview.Count > 0)
+    {
+        <section class="home-movie-section" aria-labelledby="home-watchlist-heading">
+            <div class="home-movie-section-heading">
+                <h2 class="h4" id="home-watchlist-heading">From your watchlist</h2>
+                <a asp-page="/Watchlist" asp-route-watched="false">View all</a>
+            </div>
+            <ul class="movie-grid">
+                @foreach (var movie in Model.WatchlistPreview)
+                {
+                    <li class="movie-card">
+                        @if (!string.IsNullOrEmpty(movie.PosterPath))
+                        {
+                            <a asp-page="/MovieDetails" asp-route-id="@movie.Id">
+                                <img src="https://image.tmdb.org/t/p/w200@(movie.PosterPath)" alt="@movie.Title poster" />
+                            </a>
+                        }
+                        <h3><a asp-page="/MovieDetails" asp-route-id="@movie.Id">@movie.Title</a></h3>
+                        <div class="movie-card-footer">
+                            <p>⭐ @movie.Rating.ToString("F1")</p>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </section>
+    }
+
     @if (Model.MovieMessage is not null)
     {
         <p role="status">@Model.MovieMessage</p>
@@ -45,8 +78,11 @@
     }
     else
     {
-        <h2 class="h4 movie-grid-heading">@(isStarterList ? "Starter movies" :
-            string.IsNullOrWhiteSpace(Model.SearchQuery) ? "Popular movies" : "Search results")</h2>
+        <section class="@(!Model.ShowOnboarding ? "home-movie-section" : "")" aria-labelledby="home-movie-heading">
+        <div class="@(!Model.ShowOnboarding ? "home-movie-section-heading" : "movie-grid-heading")">
+            <h2 id="home-movie-heading" class="h4">@(isStarterList ? "Starter movies" :
+                string.IsNullOrWhiteSpace(Model.SearchQuery) ? "Popular movies" : "Search results")</h2>
+        </div>
 
         <ul class="movie-grid @(isStarterList ? "movie-grid--starters" : "")">
             @foreach (Movie movie in Model.Movies)
@@ -80,21 +116,23 @@
                         else if (Model.WatchlistMovieIds.Contains(movie.Id))
                         {
                             <p>⭐ @movie.Rating.ToString("F1")</p>
-                            <span>✓ Added</span>
+                            <button class="btn btn-success watchlist-add-button" type="button" disabled>✓ Added to Watchlist</button>
                         }
                         else
                         {
                             <p>⭐ @movie.Rating.ToString("F1")</p>
-                            <form method="post">
+                            <form method="post" asp-page="/Index" data-add-to-watchlist>
                                 <input type="hidden" name="movieId" value="@movie.Id" />
                                 <input type="hidden" name="SearchQuery" value="@Model.SearchQuery" />
-                                <button class="btn btn-outline-primary" type="submit">Add to Watchlist</button>
+                                <button class="btn btn-outline-primary watchlist-add-button" type="submit">Add to Watchlist</button>
+                                <span class="watchlist-add-feedback" role="status" aria-live="polite"></span>
                             </form>
                         }
                     </div>
                 </li>
             }
         </ul>
+        </section>
 
     }
 

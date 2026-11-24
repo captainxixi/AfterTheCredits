@@ -83,6 +83,21 @@
     color: #dce3f5;
 }
 
+.home-recommendation-button {
+    --bs-btn-color: #172442;
+    --bs-btn-bg: #b2c3ff;
+    --bs-btn-border-color: #b2c3ff;
+    --bs-btn-hover-color: #172442;
+    --bs-btn-hover-bg: #d1dbff;
+    --bs-btn-hover-border-color: #d1dbff;
+    --bs-btn-active-color: #172442;
+    --bs-btn-active-bg: #98afff;
+    --bs-btn-active-border-color: #98afff;
+    margin-top: 1.15rem;
+    padding: .75rem 1.5rem;
+    font-weight: 700;
+}
+
 .home-search {
     width: min(100%, 32rem);
     margin: 0 auto 1rem;
@@ -151,6 +166,58 @@ body {
     padding: 0 clamp(12px, 3vw, 32px);
 }
 
+.home-movie-section {
+    text-align: left;
+    padding-inline: clamp(12px, 3vw, 32px);
+    margin-block: 1.4rem;
+}
+
+.home-movie-section-heading {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-inline: .45rem;
+    margin: 0 0 .75rem;
+}
+
+.home-movie-section-heading h2 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    gap: 1rem;
+    font-family: Georgia, serif;
+    font-size: clamp(1.2rem, 2vw, 1.55rem);
+    font-weight: 700;
+    letter-spacing: -.015em;
+}
+
+.home-movie-section-heading h2::after {
+    content: "";
+    flex: 1;
+    min-width: 1rem;
+    height: 1px;
+    background: linear-gradient(90deg, #45516a, #283141);
+}
+
+.home-movie-section-heading > a {
+    flex-shrink: 0;
+    font-size: .875rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.home-movie-section-heading > a:hover {
+    text-decoration: underline;
+}
+
+.home-movie-section .movie-grid {
+    grid-template-columns: repeat(auto-fill, minmax(0, min(160px, 40vw)));
+    justify-content: start;
+    padding: 0;
+}
+
 .movie-grid--starters {
     grid-template-columns: repeat(6, minmax(0, 160px));
 }
@@ -203,6 +270,25 @@ body {
 
 .movie-card-footer {
     margin-top: auto;
+}
+
+.watchlist-add-button {
+    width: 100%;
+    min-height: 3.1rem;
+}
+
+.watchlist-add-button.btn-success:disabled {
+    opacity: 1;
+    color: #abe0c4;
+    background: #213c34;
+    border-color: #416957;
+}
+
+.watchlist-add-feedback:not(:empty):not(.visually-hidden) {
+    display: block;
+    margin-top: .35rem;
+    color: #ffb4ab;
+    font-size: .8rem;
 }
 
 .movie-card p {

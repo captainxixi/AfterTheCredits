@@ -128,7 +128,8 @@ public class MovieDetailsModel : PageModel
             return BadRequest("Rating must be between 0 and 10.");
         }
 
-        await _dbContext.SaveWatchlistMovieAsync(id, HttpContext.RequestAborted, myRating: rating);
+        await _dbContext.SaveWatchlistMovieAsync(id, HttpContext.RequestAborted,
+            isWatched: true, myRating: rating);
 
         return RedirectToPage(new { id });
     }
