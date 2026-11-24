@@ -146,7 +146,25 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.privacy-policy {
+    max-width: 52rem;
+    margin-inline: auto;
+    line-height: 1.7;
+}
+
+.privacy-policy h2 {
+    margin-top: 1.5rem;
+    font-size: 1.2rem;
+}
+
+.privacy-policy .privacy-updated {
+    color: var(--atc-muted);
+    font-size: .875rem;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {

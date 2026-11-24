@@ -39,10 +39,37 @@ button.accept-policy {
   line-height: inherit;
 }
 
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  white-space: nowrap;
-  line-height: 60px;
+.site-footer {
+  margin-top: auto;
+  padding-block: .9rem 1rem;
+  border-top: 1px solid var(--atc-line);
+  color: var(--atc-muted);
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
+.footer-links,
+.footer-credits {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .35rem 1rem;
+}
+
+.footer-credits {
+  margin-top: .55rem;
+}
+
+.footer-credits p {
+  margin: 0;
+}
+
+.site-footer a {
+  color: #b2c3ff;
+}
+
+.footer-tmdb img {
+  display: block;
+  width: 116px;
+  height: auto;
 }
